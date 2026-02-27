@@ -1,0 +1,6 @@
+{"id": 1, "title": "bring tomato", "description": "before evening to cook somthing", "completed": true}
+{"id": 2, "title": "bring gram pouder", "description": "from dong xuang", "completed": true}
+{"id": 3, "title": "upload this project to Github.com ", "description": "before 28th of Feb as it is the deadline", "completed": true}
+{"id": 4, "title": "Create a new project in Python", "description": "more difficult one", "completed": false}
+{"id": 5, "title": "check you email for any new appointment", "description": "don't forget to check spam folder", "completed": false}
+{"id": 6, "title": "complet the project test", "description": "check each and every functionality and remove all bugs ", "completed": true}

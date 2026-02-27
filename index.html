@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management System - HTW Berlin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%);
+            min-height: 100vh;
+        }
+        .htw-teal { background-color: #0096a1; }
+        .htw-text { color: #0096a1; }
+        .glass {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .tab-content { display: none; }
+        .active-content { display: block; }
+        .tab-link { transition: all 0.2s; border-bottom: 4px solid transparent; }
+        .active-tab { 
+            background-color: #0096a1 !important; 
+            color: white !important;
+            font-weight: bold;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 150, 161, 0.3);
+        }
+        /* Custom styles for completion states */
+        .task-incomplete { background: white; border-left: 6px solid #94a3b8; }
+        .task-complete { background: #f0fdf4; border-left: 6px solid #22c55e; }
+    </style>
+</head>
+<body class="p-4 md:p-8 font-sans">
+
+    <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-black text-gray-900 tracking-tight">TASK MANAGEMENT SYSTEM</h1>
+            <div class="h-1.5 w-40 htw-teal mx-auto my-3 rounded-full"></div>
+            <p class="text-gray-600 font-bold uppercase tracking-[0.2em] text-sm">HTW Berlin • University of Applied Sciences</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-0">
+            <button onclick="openTab('view-tab', this)" class="tab-link flex-1 min-w-[120px] py-4 bg-white/70 rounded-t-2xl text-gray-600 active-tab">VIEW & MANAGE</button>
+            <button onclick="openTab('create-tab', this)" class="tab-link flex-1 min-w-[120px] py-4 bg-white/70 rounded-t-2xl text-gray-600">CREATE TASK</button>
+            <button onclick="openTab('search-tab', this)" class="tab-link flex-1 min-w-[120px] py-4 bg-white/70 rounded-t-2xl text-gray-600">SEARCH</button>
+            <button onclick="openTab('system-tab', this)" class="tab-link flex-1 min-w-[120px] py-4 bg-white/70 rounded-t-2xl text-gray-600">SYSTEM</button>
+        </div>
+
+        <div class="glass p-8 rounded-b-2xl rounded-tr-2xl shadow-2xl mb-8">
+            
+            <div id="view-tab" class="tab-content active-content">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold htw-text uppercase tracking-wide">Database Records</h2>
+                    <div class="flex bg-gray-200 p-1 rounded-xl w-full md:w-auto">
+                        <button onclick="setFilter('all')" id="filter-all" class="flex-1 px-4 py-2 rounded-lg text-xs font-bold bg-white shadow-sm">ALL</button>
+                        <button onclick="setFilter('pending')" id="filter-pending" class="flex-1 px-4 py-2 rounded-lg text-xs font-bold text-gray-600">PENDING</button>
+                        <button onclick="setFilter('done')" id="filter-done" class="flex-1 px-4 py-2 rounded-lg text-xs font-bold text-gray-600">COMPLETED</button>
+                    </div>
+                </div>
+                <div id="taskList" class="space-y-4"></div>
+            </div>
+
+            <div id="create-tab" class="tab-content">
+                <h2 class="text-2xl font-bold mb-6 htw-text uppercase tracking-wide">New Record Entry</h2>
+                <div class="space-y-4 max-w-2xl">
+                    <input id="newTitle" type="text" placeholder="Task Name" class="w-full p-4 rounded-xl border focus:ring-2 focus:ring-teal-500 outline-none">
+                    <textarea id="newDesc" placeholder="Project details..." class="w-full p-4 rounded-xl border focus:ring-2 focus:ring-teal-500 outline-none h-32"></textarea>
+                    <button onclick="createTask()" class="htw-teal text-white px-10 py-4 rounded-xl font-bold hover:brightness-110 shadow-lg">Submit to Registry</button>
+                </div>
+            </div>
+
+            <div id="search-tab" class="tab-content">
+                <h2 class="text-2xl font-bold mb-6 htw-text uppercase tracking-wide">Registry Lookup</h2>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-gray-50/50 p-6 rounded-2xl border">
+                        <label class="block font-bold text-xs uppercase mb-2 text-gray-500">Query by Title</label>
+                        <div class="flex gap-2">
+                            <input id="searchInput" type="text" placeholder="Keywords..." class="flex-grow p-3 rounded-xl border">
+                            <button onclick="searchTasks()" class="htw-teal text-white px-5 py-2 rounded-xl">Search</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50/50 p-6 rounded-2xl border">
+                        <label class="block font-bold text-xs uppercase mb-2 text-gray-500">Query by Primary Key (ID)</label>
+                        <div class="flex gap-2">
+                            <input id="idSearchInput" type="number" placeholder="ID#" class="flex-grow p-3 rounded-xl border">
+                            <button onclick="searchByID()" class="bg-gray-800 text-white px-5 py-2 rounded-xl">Find</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="searchResult" class="mt-8"></div>
+            </div>
+
+            <div id="system-tab" class="tab-content">
+                <h2 class="text-2xl font-bold mb-6 htw-text uppercase tracking-wide">System Management</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="triggerDirectBackup()" class="bg-blue-600 text-white p-4 rounded-2xl font-bold shadow hover:bg-blue-700">Server Backup</button>
+                    <button onclick="window.location.href='http://127.0.0.1:8000/tasks/export'" class="bg-gray-700 text-white p-4 rounded-2xl font-bold shadow hover:bg-gray-800">Export JSON</button>
+                    <button onclick="deleteAll()" class="bg-red-600 text-white p-4 rounded-2xl font-bold shadow hover:bg-red-700">Wipe Registry</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="stats-summary" class="glass rounded-2xl p-8 flex flex-wrap justify-around items-center text-center shadow-xl">
+            </div>
+
+        <p class="text-center text-gray-400 text-[10px] mt-8 uppercase tracking-widest">© 2026 HTW Berlin - Final Project Submission</p>
+    </div>
+
+    <script>
+        const API = 'http://127.0.0.1:8000/tasks';
+        let currentFilter = 'all';
+
+        async function fetchStats() {
+            const res = await fetch(`${API}/stats`);
+            const s = await res.json();
+            document.getElementById('stats-summary').innerHTML = `
+                <div><p class="text-gray-400 text-[10px] uppercase font-bold mb-1">Total Records</p><p class="text-4xl font-black text-gray-800">${s.total_tasks}</p></div>
+                <div class="hidden md:block w-px h-12 bg-gray-200"></div>
+                <div><p class="text-gray-400 text-[10px] uppercase font-bold mb-1">Completed</p><p class="text-4xl font-black text-green-600">${s.completed_tasks}</p></div>
+                <div class="hidden md:block w-px h-12 bg-gray-200"></div>
+                <div><p class="text-gray-400 text-[10px] uppercase font-bold mb-1">Efficiency</p><p class="text-4xl font-black htw-text">${s.completion_percentage}</p></div>
+            `;
+        }
+
+        async function setFilter(val) {
+            currentFilter = val;
+            // Update filter buttons UI
+            ['all', 'pending', 'done'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                btn.classList.remove('bg-white', 'shadow-sm', 'text-gray-600');
+                if (f === val) {
+                    btn.classList.add('bg-white', 'shadow-sm');
+                } else {
+                    btn.classList.add('text-gray-600');
+                }
+            });
+            loadTasks();
+        }
+
+        async function loadTasks() {
+            let url = API;
+            if (currentFilter === 'done') url += '?completed=true';
+            if (currentFilter === 'pending') url += '?completed=false';
+            
+            const res = await fetch(url);
+            const tasks = await res.json();
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+            
+            tasks.forEach((t, index) => {
+                // Opacity fade logic: first tasks are 100%, later tasks fade slightly
+                const opacity = Math.max(0.7, 1 - (index * 0.03));
+                list.innerHTML += taskTemplate(t, opacity);
+            });
+            fetchStats();
+        }
+
+        function taskTemplate(t, opacity = 1) {
+            const statusClass = t.completed ? 'task-complete' : 'task-incomplete';
+            return `
+                <div class="p-5 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 transition-all hover:shadow-md ${statusClass}" style="opacity: ${opacity}">
+                    <div class="flex-grow w-full">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-200 text-gray-600">ID #${t.id}</span>
+                            ${t.completed ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-green-200 text-green-700 uppercase">Verified</span>' : ''}
+                        </div>
+                        <input id="title-${t.id}" class="text-lg font-bold w-full bg-transparent border-none p-0 focus:ring-0 ${t.completed ? 'line-through text-gray-400' : 'text-gray-800'}" value="${t.title}">
+                        <input id="desc-${t.id}" class="text-sm text-gray-500 w-full bg-transparent border-none p-0 focus:ring-0" value="${t.description || ''}">
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="updateTask(${t.id}, ${t.completed})" class="text-[10px] bg-white border px-4 py-2 rounded-lg font-black hover:bg-gray-50 transition uppercase">Save</button>
+                        <button onclick="toggleStatus(${t.id}, ${t.completed})" class="text-[10px] ${t.completed ? 'bg-orange-500 text-white' : 'htw-teal text-white'} px-4 py-2 rounded-lg font-black transition uppercase">${t.completed ? 'Undo' : 'Complete'}</button>
+                        <button onclick="deleteSingle(${t.id})" class="text-[10px] bg-red-100 text-red-600 px-4 py-2 rounded-lg font-black hover:bg-red-200 transition uppercase">Delete</button>
+                    </div>
+                </div>`;
+        }
+
+        // Rest of the logic remains robust
+        async function updateTask(id, completed) {
+            const title = document.getElementById(`title-${id}`).value;
+            const description = document.getElementById(`desc-${id}`).value;
+            await fetch(`${API}/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title, description, completed })
+            });
+            loadTasks();
+        }
+
+        async function triggerDirectBackup() {
+            const res = await fetch(`${API}/backup/trigger`, { method: 'POST' });
+            const data = await res.json();
+            alert(data.message);
+        }
+
+        function openTab(name, el) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active-content'));
+            document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active-tab'));
+            document.getElementById(name).classList.add('active-content');
+            el.classList.add('active-tab');
+        }
+
+        async function searchTasks() {
+            const q = document.getElementById('searchInput').value;
+            const res = await fetch(`${API}?q=${q}`);
+            const results = await res.json();
+            const box = document.getElementById('searchResult');
+            box.innerHTML = `<h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Found ${results.length} matches:</h3>`;
+            results.forEach(t => box.innerHTML += taskTemplate(t));
+        }
+
+        async function searchByID() {
+            const id = document.getElementById('idSearchInput').value;
+            const res = await fetch(`${API}/${id}`);
+            const box = document.getElementById('searchResult');
+            if(res.status === 404) {
+                box.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 font-bold text-sm">Task ID ${id} not found in HTW records.</div>`;
+            } else {
+                const t = await res.json();
+                box.innerHTML = `<h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Direct ID Match:</h3>` + taskTemplate(t);
+            }
+        }
+
+        async function createTask() {
+            const title = document.getElementById('newTitle').value;
+            const description = document.getElementById('newDesc').value;
+            if(!title) return alert("Validation Error: Title Required");
+            await fetch(API, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title, description, completed: false })
+            });
+            document.getElementById('newTitle').value = '';
+            document.getElementById('newDesc').value = '';
+            loadTasks();
+            openTab('view-tab', document.querySelector('.tab-link'));
+        }
+
+        async function toggleStatus(id, current) {
+            const title = document.getElementById(`title-${id}`).value;
+            const description = document.getElementById(`desc-${id}`).value;
+            await fetch(`${API}/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title, description, completed: !current })
+            });
+            loadTasks();
+        }
+
+        async function deleteSingle(id) {
+            if(confirm("Confirm deletion of record?")) {
+                await fetch(`${API}/${id}`, { method: 'DELETE' });
+                loadTasks();
+            }
+        }
+
+        async function deleteAll() {
+            if(confirm("DANGER: Wiping all HTW records?")) {
+                await fetch(API, { method: 'DELETE' });
+                loadTasks();
+            }
+        }
+
+        window.onload = loadTasks;
+    </script>
+</body>
+</html>
