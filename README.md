@@ -1,9 +1,6 @@
 Final Project:
 
 Course: B1 Programming
-University: HTW Berlin (University of Applied Sciences)
-Student Name: Muzamil Hussain
-Student ID: S0603660
 
 project details:
 
